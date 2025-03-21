@@ -1,0 +1,9 @@
+Acceder console mysql
+docker exec -it dbMain mysql -u root -p daybyday
+
+Donnees
+docker exec -it phpMain php artisan migrate:fresh --seed && docker exec -it phpMain php artisan db:seed --class=DummyDatabaseSeeder
+
+Installation
+docker-compose exec --user root php apt-get update
+docker-compose exec --user root php apt-get install -y nodejs npm
