@@ -13,8 +13,15 @@ use Illuminate\Http\Request;
 |
 */
 
-Route::group(['namespace' => 'App\Api\v1\Controllers'], function () {
-    Route::group(['middleware' => 'auth:api'], function () {
-        Route::get('users', ['uses' => 'UserController@index']);
-    });
+// Route simple pour tester l'API
+Route::get('/test', function() {
+    return response()->json([
+        'message' => 'Ca marche!'
+    ]);
 });
+
+// Route::group(['namespace' => 'App\Api\v1\Controllers'], function () {
+//     Route::group(['middleware' => 'auth:api'], function () {
+//         Route::get('users', ['uses' => 'UserController@index']);
+//     });
+// });

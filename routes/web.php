@@ -245,3 +245,20 @@ Route::group(['middleware' => ['auth']], function () {
     Route::get('/dropbox-token', 'CallbackController@dropbox')->name('dropbox.callback');
     Route::get('/googledrive-token', 'CallbackController@googleDrive')->name('googleDrive.callback');
 });
+
+Route::get('/test2', function() {
+    return response()->json([
+        'message' => 'Ca marche!'
+    ]);
+});
+
+// API REST routes
+Route::prefix('api-rest')->group(function () {
+    Route::get('/test', function(){ return response()->json(['message' => 'Ca marche2!']);});
+    Route::post('/test2', 'Api\ApiAuthController@test2');
+    Route::get('/login', 'Api\ApiAuthController@login');
+    Route::middleware('auth.api.token')->group(function () {
+        Route::post('/logout', 'Api\ApiAuthController@logout');
+        Route::get('/user', 'Api\ApiAuthController@user');
+    });
+});
