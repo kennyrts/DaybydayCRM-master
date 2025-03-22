@@ -11,6 +11,7 @@ use Carbon\Carbon;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Http\Request;
 use Ramsey\Uuid\Uuid;
+use App\Services\Invoice\InvoiceCalculator;
 
 class PaymentsController extends Controller
 {
@@ -52,6 +53,16 @@ class PaymentsController extends Controller
         if (!$invoice->isSent()) {
             session()->flash('flash_message_warning', __("Can't add payment on Invoice"));
             return redirect()->route('invoices.show', $invoice->external_id);
+        }
+
+        // Calculer le montant dû comme dans InvoicesController
+        $invoiceCalculator = new InvoiceCalculator($invoice);
+        $amountDue = $invoiceCalculator->getAmountDue();
+
+        // Vérifier si le montant du paiement dépasse le montant dû
+        if ($request->amount > $amountDue->getBigDecimalAmount()) {
+            session()->flash('flash_message_warning', __('Payment amount cannot exceed the amount due'));
+            return redirect()->back()->withInput();
         }
 
         $payment = Payment::create([
