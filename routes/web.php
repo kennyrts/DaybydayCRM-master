@@ -227,6 +227,18 @@ Route::group(['middleware' => ['auth']], function () {
         Route::post('/', 'AbsenceController@store')->name('absence.store');
         Route::delete('/{absence}', 'AbsenceController@destroy')->name('absence.destroy');
     });
+
+    /**
+     * Database
+     */
+    Route::group(['prefix' => 'database'], function () {
+        Route::get('/delete', 'DatabaseController@deleteForm')->name('database.delete');
+        Route::post('/delete', 'DatabaseController@delete');
+        Route::get('/import', 'DatabaseController@importForm')->name('database.import');
+        Route::post('/import', 'DatabaseController@import');
+        Route::get('/export', 'DatabaseController@exportForm')->name('database.export');
+        Route::post('/export', 'DatabaseController@export');
+    });
 });
 
 Route::group(['middleware' => ['auth']], function () {

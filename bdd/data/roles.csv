@@ -1,0 +1,5 @@
+id,external_id,name,display_name,description,created_at,updated_at
+1,2d3e4713-8c47-44f7-8abd-1747bdb2f3fa,owner,Owner,Owner,"2025-03-22 05:00:10","2025-03-22 05:00:10"
+2,42744ac6-92ff-48a5-bffa-a13edb0ca7d4,administrator,Administrator,"System Administrator","2025-03-22 05:00:11","2025-03-22 05:00:11"
+3,9e5e2059-88a4-4c82-9565-87d2bd83b0fa,manager,Manager,"System Manager","2025-03-22 05:00:11","2025-03-22 05:00:11"
+4,96931d38-d48c-4352-80ef-bd35b6172d73,employee,Employee,Employee,"2025-03-22 05:00:11","2025-03-22 05:00:11"
