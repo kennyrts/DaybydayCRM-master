@@ -38,12 +38,13 @@
     },
     "require-dev": {
         "barryvdh/laravel-debugbar": "~3.2",
+        "beyondcode/laravel-er-diagram-generator": "^4.0",
         "facade/ignition": "^2.0",
         "fzaninotto/faker": "~1.8",
         "laravel/dusk": "^5.8",
         "mockery/mockery": "0.9.*",
+        "nunomaduro/collision": "^4.1",
         "phpunit/phpunit": "^8.5",
-        "nunomaduro/collision":"^4.1",
         "symfony/css-selector": "2.8.*|3.0.*",
         "symfony/dom-crawler": "2.8.*|3.0.*"
     },

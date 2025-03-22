@@ -1,0 +1,2 @@
+id,external_id,name,email,password,address,primary_number,secondary_number,image_path,remember_token,language,deleted_at,created_at,updated_at
+1,43a7a966-2595-4faf-be72-693210eed32f,Admin,admin@admin.com,$2y$10$TRwUfPObTtWsGGdonsDNsOs21fIeyyObj45lELHx7ablShnwqmCge,,,,,,EN,,"2016-06-04 13:42:19","2016-06-04 13:42:19"

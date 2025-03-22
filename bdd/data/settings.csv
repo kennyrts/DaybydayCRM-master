@@ -1,0 +1,2 @@
+id,client_number,invoice_number,country,company,currency,vat,max_users,language,created_at,updated_at
+1,10000,10000,en,Media,USD,725,10,EN,,
