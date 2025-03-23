@@ -77,11 +77,11 @@ class InvoiceController extends Controller
                         'id' => $invoice->id,
                         'number' => $invoice->invoice_number,
                         'client_name' => $invoice->client->company_name,
-                        'amount' => $this->calculateInvoiceAmount($invoice),
+                        'amount' => $this->calculateInvoiceAmount($invoice)/100,
                         'due_date' => $invoice->due_at,
                         'created_at' => $invoice->created_at,
-                        'total_paid' => $this->calculateTotalPaid($invoice),
-                        'remaining' => $this->calculateInvoiceAmount($invoice) - $this->calculateTotalPaid($invoice)
+                        'total_paid' => $this->calculateTotalPaid($invoice)/100,
+                        'remaining' => ($this->calculateInvoiceAmount($invoice)/100) - ($this->calculateTotalPaid($invoice)/100)
                     ];
                 });
 
@@ -136,18 +136,46 @@ class InvoiceController extends Controller
                     'id' => $invoice->id,
                     'number' => $invoice->invoice_number,
                     'client_name' => $invoice->client->company_name,
-                    'amount' => $this->calculateInvoiceAmount($invoice),
+                    'amount' => $this->calculateInvoiceAmount($invoice)/100,
                     'due_date' => $invoice->due_at
                 ],
                 'payments' => $invoice->payments->map(function ($payment) {
                     return [
                         'id' => $payment->id,
-                        'amount' => $payment->amount,
+                        'amount' => $payment->amount/100,
                         'date' => $payment->payment_date,
                         'source' => $payment->payment_source,
                         'description' => $payment->description
                     ];
                 })
+            ]
+        ]);
+    }
+
+    /**
+     * Get payment statistics for all invoices
+     * 
+     * @return JsonResponse
+     */
+    public function paymentStats()
+    {
+        $invoices = Invoice::with(['payments', 'invoiceLines'])->get();
+        
+        $totalPaid = 0;
+        $totalUnpaid = 0;
+        
+        foreach ($invoices as $invoice) {
+            $invoiceAmount = $this->calculateInvoiceAmount($invoice)/100;
+            $paidAmount = $this->calculateTotalPaid($invoice)/100;
+            $totalPaid += $paidAmount;
+            $totalUnpaid += ($invoiceAmount - $paidAmount);
+        }
+
+        return response()->json([
+            'status' => 'success',
+            'data' => [
+                'total_paid' => $totalPaid,
+                'total_unpaid' => $totalUnpaid
             ]
         ]);
     }

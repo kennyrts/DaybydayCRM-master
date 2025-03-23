@@ -40,6 +40,7 @@ Route::middleware('auth.api.token')->group(function () {
 // });
 
 Route::get('/invoices/count-by-status', [InvoiceController::class, 'countByStatus']);
+Route::get('/invoices/payment-stats', [InvoiceController::class, 'paymentStats']);
 Route::get('/invoices/status/{status}', [InvoiceController::class, 'getInvoicesByStatus']);
 Route::get('/invoices/{invoiceId}/payments', [InvoiceController::class, 'getInvoicePayments']);
 
