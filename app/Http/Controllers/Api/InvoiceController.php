@@ -1,0 +1,154 @@
+<?php
+
+namespace App\Http\Controllers\Api;
+
+use App\Http\Controllers\Controller;
+use App\Models\Invoice;
+use App\Models\Payment;
+use App\Enums\InvoiceStatus;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+
+class InvoiceController extends Controller
+{
+    /**
+     * Get the count of invoices grouped by status
+     *
+     * @return JsonResponse
+     */
+    public function countByStatus()
+    {
+        $counts = Invoice::select('status', DB::raw('count(*) as total'))
+            ->groupBy('status')
+            ->get()
+            ->mapWithKeys(function ($item) {
+                try {
+                    $status = InvoiceStatus::fromStatus($item->status);
+                    return [
+                        $status->getDisplayValue() => [
+                            'count' => $item->total,
+                            'status' => $status->getStatus()
+                        ]
+                    ];
+                } catch (\Exception $e) {
+                    return [];
+                }
+            });
+
+        // Ajouter les statuts qui n'ont pas de factures (count = 0)
+        foreach (InvoiceStatus::values() as $status) {
+            if (!$counts->has($status->getDisplayValue())) {
+                $counts[$status->getDisplayValue()] = [
+                    'count' => 0,
+                    'status' => $status->getStatus()
+                ];
+            }
+        }
+
+        return response()->json([
+            'status' => 'success',
+            'data' => [
+                'total' => Invoice::count(),
+                'by_status' => $counts
+            ]
+        ]);
+    }
+
+    /**
+     * Get invoices by status
+     * 
+     * @param string $status
+     * @return JsonResponse
+     */
+    public function getInvoicesByStatus($status)
+    {
+        try {
+            // Débogage
+            \Log::info('Status reçu: ' . $status);
+            
+            $statusEnum = InvoiceStatus::fromStatus($status);
+            
+            $invoices = Invoice::where('status', $status)
+                ->with(['client', 'payments'])
+                ->get()
+                ->map(function ($invoice) {
+                    return [
+                        'id' => $invoice->id,
+                        'number' => $invoice->invoice_number,
+                        'client_name' => $invoice->client->company_name,
+                        'amount' => $this->calculateInvoiceAmount($invoice),
+                        'due_date' => $invoice->due_at,
+                        'created_at' => $invoice->created_at,
+                        'total_paid' => $this->calculateTotalPaid($invoice),
+                        'remaining' => $this->calculateInvoiceAmount($invoice) - $this->calculateTotalPaid($invoice)
+                    ];
+                });
+
+            return response()->json([
+                'status' => 'success',
+                'data' => [
+                    'status_display' => $statusEnum->getDisplayValue(),
+                    'status_code' => $status,
+                    'invoices' => $invoices
+                ]
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('Erreur: ' . $e->getMessage());
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Invalid status: ' . $e->getMessage()
+            ], 400);
+        }
+    }
+
+    /**
+     * Calculate total amount of invoice from invoice lines
+     */
+    private function calculateInvoiceAmount($invoice)
+    {
+        return $invoice->invoiceLines->sum('price');
+    }
+
+    /**
+     * Calculate total paid amount from payments
+     */
+    private function calculateTotalPaid($invoice)
+    {
+        return $invoice->payments->sum('amount');
+    }
+
+    /**
+     * Get payments for a specific invoice
+     * 
+     * @param int $invoiceId
+     * @return JsonResponse
+     */
+    public function getInvoicePayments($invoiceId)
+    {
+        $invoice = Invoice::with(['client', 'payments', 'invoiceLines'])
+            ->findOrFail($invoiceId);
+
+        return response()->json([
+            'status' => 'success',
+            'data' => [
+                'invoice' => [
+                    'id' => $invoice->id,
+                    'number' => $invoice->invoice_number,
+                    'client_name' => $invoice->client->company_name,
+                    'amount' => $this->calculateInvoiceAmount($invoice),
+                    'due_date' => $invoice->due_at
+                ],
+                'payments' => $invoice->payments->map(function ($payment) {
+                    return [
+                        'id' => $payment->id,
+                        'amount' => $payment->amount,
+                        'date' => $payment->payment_date,
+                        'source' => $payment->payment_source,
+                        'description' => $payment->description
+                    ];
+                })
+            ]
+        ]);
+    }
+} 
