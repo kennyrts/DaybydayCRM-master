@@ -8,6 +8,7 @@ use App\Models\Invoice;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use App\Enums\InvoiceStatus;
+use App\Services\Invoice\GenerateInvoiceStatus;
 
 class PaymentController extends Controller
 {
@@ -29,7 +30,7 @@ class PaymentController extends Controller
         $payment->update(['amount' => $request->amount]);
 
         // Recalculer le statut de la facture
-        $this->updateInvoiceStatus($payment->invoice);
+        app(GenerateInvoiceStatus::class, ['invoice' => $payment->invoice])->createStatus();
 
         return response()->json([
             'status' => 'success',
@@ -54,32 +55,12 @@ class PaymentController extends Controller
         $payment->delete();
 
         // Recalculer le statut de la facture
-        $this->updateInvoiceStatus($invoice);
+        app(GenerateInvoiceStatus::class, ['invoice' => $invoice])->createStatus();
 
         return response()->json([
             'status' => 'success',
             'message' => 'Payment deleted successfully',
             'invoice_status' => $invoice->status
         ]);
-    }
-
-    /**
-     * Update invoice status based on payments
-     */
-    private function updateInvoiceStatus(Invoice $invoice)
-    {
-        $totalPaid = $invoice->payments->sum('amount');
-        
-        if ($totalPaid == 0) {
-            $invoice->status = InvoiceStatus::unpaid()->getStatus();
-        } elseif ($totalPaid < $invoice->amount) {
-            $invoice->status = InvoiceStatus::partialPaid()->getStatus();
-        } elseif ($totalPaid == $invoice->amount) {
-            $invoice->status = InvoiceStatus::paid()->getStatus();
-        } else {
-            $invoice->status = InvoiceStatus::overpaid()->getStatus();
-        }
-
-        $invoice->save();
     }
 } 
