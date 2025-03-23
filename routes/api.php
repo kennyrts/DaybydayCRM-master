@@ -4,6 +4,7 @@ use Illuminate\Http\Request;
 use App\Http\Controllers\Api\ApiAuthController;
 use App\Http\Controllers\Api\InvoiceController;
 use App\Http\Controllers\Api\PaymentController;
+use App\Http\Controllers\Api\TaskStatsController;
 
 /*
 |--------------------------------------------------------------------------
@@ -57,3 +58,5 @@ Route::get('/invoice-statuses', function() {
         }, \App\Enums\InvoiceStatus::values())
     ]);
 });
+
+Route::get('tasks/stats', [TaskStatsController::class, 'byStatus']);
