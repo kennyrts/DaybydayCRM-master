@@ -27,7 +27,7 @@ class PaymentController extends Controller
             'amount' => 'required|numeric|min:0'
         ]);
 
-        $payment->update(['amount' => $request->amount]);
+        $payment->update(['amount' => $request->amount * 100]);
 
         // Recalculer le statut de la facture
         app(GenerateInvoiceStatus::class, ['invoice' => $payment->invoice])->createStatus();
