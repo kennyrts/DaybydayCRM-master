@@ -5,6 +5,7 @@ use App\Http\Controllers\Api\ApiAuthController;
 use App\Http\Controllers\Api\InvoiceController;
 use App\Http\Controllers\Api\PaymentController;
 use App\Http\Controllers\Api\TaskStatsController;
+use App\Http\Controllers\Api\OfferStatsController;
 
 /*
 |--------------------------------------------------------------------------
@@ -60,3 +61,4 @@ Route::get('/invoice-statuses', function() {
 });
 
 Route::get('tasks/stats', [TaskStatsController::class, 'byStatus']);
+Route::get('offers/stats', [OfferStatsController::class, 'byStatus']);
