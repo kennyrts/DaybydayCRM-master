@@ -3,6 +3,8 @@ docker exec -it dbMain mysql -u root -p daybyday
 
 # Exporter la structure de la base de données (sans les données)
 docker exec dbMain mysqldump -u root -proot --no-data --skip-comments daybyday > schema.sql
+docker exec dbMain mysqldump -u root -proot daybyday > backup.sql
+docker exec dbMain mysql -u root -proot daybyday < backup.sql
 
 # Donnees
 docker exec -it phpMain php artisan migrate:fresh --seed && docker exec -it phpMain php artisan db:seed --class=DummyDatabaseSeeder

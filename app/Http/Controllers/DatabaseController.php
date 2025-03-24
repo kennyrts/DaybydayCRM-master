@@ -38,36 +38,74 @@ class DatabaseController extends Controller
         }
 
         try {
-            // Sauvegarder les utilisateurs
-            $users = DB::table('users')->get();
-            
-            // Exécuter migrate:fresh --seed pour réinitialiser la base de données
-            $exitCode = Artisan::call('migrate:fresh', [
-                '--seed' => true,
-                '--force' => true
-            ]);
+            DB::beginTransaction();
 
-            if ($exitCode !== 0) {
-                throw new \Exception("La commande migrate:fresh a échoué avec le code de sortie: $exitCode");
-            }
-            
-            // Restaurer les utilisateurs (sauf l'utilisateur admin par défaut avec ID 1)
-            foreach ($users as $user) {
-                if ($user->id > 1) {  // Ne pas restaurer l'utilisateur admin par défaut
-                    // Supprimer certains champs qui pourraient causer des problèmes
-                    $userData = (array) $user;
-                    unset($userData['id']);  // Laisser la base de données générer un nouvel ID
-                    
-                    // Insérer l'utilisateur
-                    DB::table('users')->insert($userData);
+            // Tables à ne pas vider
+            $protectedTables = [
+                'business_hours',
+                'industries',
+                'migrations', 
+                'permission_role',
+                'permissions',
+                'roles',
+                'settings',
+                'statuses'
+            ];
+
+            // Tables avec première ligne à conserver
+            $preserveFirstRowTables = [
+                'departments',
+                'department_user',
+                'users'
+            ];
+
+            // Tables spéciales avec première association à conserver
+            $specialTables = [                
+                'role_user' => ['user_id', 1]
+            ];
+
+            // Désactiver les contraintes de clés étrangères
+            DB::statement('SET FOREIGN_KEY_CHECKS=0');
+
+            // Récupérer toutes les tables
+            $tables = DB::select('SHOW TABLES');
+            $dbName = 'Tables_in_' . env('DB_DATABASE');
+
+            foreach ($tables as $table) {
+                $tableName = $table->$dbName;
+
+                if (!in_array($tableName, $protectedTables)) {
+                    if (in_array($tableName, $preserveFirstRowTables)) {
+                        // Supprimer toutes les lignes sauf la première
+                        DB::table($tableName)
+                            ->where('id', '>', 1)
+                            ->delete();
+                    } elseif (array_key_exists($tableName, $specialTables)) {
+                        // Pour les tables avec des clés composites
+                        list($field, $value) = $specialTables[$tableName];
+                        DB::table($tableName)
+                            ->where($field, '!=', $value)
+                            ->delete();
+                    } else {
+                        // Vider complètement la table
+                        DB::table($tableName)->delete();
+                    }
                 }
             }
 
+            // Réactiver les contraintes de clés étrangères
+            DB::statement('SET FOREIGN_KEY_CHECKS=1');
+
+            DB::commit();
+
             return redirect()->back()
-                ->with('flash_message', 'La base de données a été réinitialisée avec succès tout en préservant les utilisateurs.');
+                ->with('flash_message', 'Les données ont été supprimées avec succès en préservant les tables et lignes spécifiées.');
+
         } catch (\Exception $e) {
+            DB::rollBack();
+            
             return redirect()->back()
-                ->with('flash_message_warning', 'Erreur lors de la réinitialisation de la base de données : ' . $e->getMessage());
+                ->with('flash_message_warning', 'Erreur lors de la suppression des données : ' . $e->getMessage());
         }
     }
 
