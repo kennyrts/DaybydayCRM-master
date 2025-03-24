@@ -23,6 +23,23 @@ class InvoiceLine extends Model
     ];
 
     /**
+     * The "booted" method of the model.
+     *
+     * @return void
+     */
+    protected static function booted()
+    {
+        static::creating(function ($invoiceLine) {
+            // N'appliquer la remise que pour les nouvelles lignes qui ne sont pas copiées d'une offre
+            if (!$invoiceLine->invoice_id && !$invoiceLine->wasRecentlyCreated) {
+                $discountRate = Discount::getCurrentRate();
+                $originalPrice = $invoiceLine->price;
+                $invoiceLine->price = $originalPrice * (1 - ($discountRate / 100));
+            }
+        });
+    }
+
+    /**
      * Get the route key for the model.
      *
      * @return string
@@ -59,7 +76,7 @@ class InvoiceLine extends Model
     
     public function getTotalValueConvertedAttribute()
     {
-        $money = new Money($this->quantity * $this->price);
+        $money = new Money($this->total_value);
         return app(MoneyConverter::class, ['money' => $money])->format();
     }
     
@@ -67,5 +84,10 @@ class InvoiceLine extends Model
     {
         $money = new Money($this->price);
         return app(MoneyConverter::class, ['money' => $money])->format();
+    }
+
+    public function offer()
+    {
+        return $this->belongsTo(Offer::class);
     }
 }

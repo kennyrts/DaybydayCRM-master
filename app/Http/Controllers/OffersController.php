@@ -69,7 +69,6 @@ class OffersController extends Controller
         }
 
         return response("OK");
-        
     }
 
     public function won(Request $request)
@@ -83,14 +82,14 @@ class OffersController extends Controller
         $invoice->status = InvoiceStatus::draft()->getStatus();
         $invoice->save();
         
-        $lines = $offer->invoiceLines;
-        $newLines = collect();
-        foreach($lines as $invoiceLine) {
+        // Copier les lignes de l'offre vers la facture en préservant les prix déjà remisés
+        foreach($offer->invoiceLines as $offerLine) {
+            $invoiceLine = new InvoiceLine();
+            $invoiceLine->fill($offerLine->toArray());
             $invoiceLine->offer_id = null;
-            $newLines->push(InvoiceLine::make($invoiceLine->toArray()));
+            $invoiceLine->wasRecentlyCreated = true; // Pour éviter d'appliquer la remise à nouveau
+            $invoice->invoiceLines()->save($invoiceLine);
         }
-  
-        $invoice->invoiceLines()->saveMany($newLines);
         
         return redirect()->back();
     }
