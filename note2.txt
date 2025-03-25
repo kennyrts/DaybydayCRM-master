@@ -1,0 +1,155 @@
+feuille1
+projet,client
+check client:
+    - misy => tsy atao inn2
+    - tsy misy => create client
+insertion projet : mifanaraka @ client
+
+Create client:
+ClientController.store
+
+$client = Client::create([
+    'external_id' => Uuid::uuid4()->toString(),
+    'vat' => $request->vat,
+    'company_name' => $request->company_name,
+    'address' => $request->address,
+    'zipcode' => $request->zipcode,
+    'city' => $request->city,
+    'company_type' => $request->company_type,
+    'industry_id' => $request->industry_id,
+    'user_id' => $request->user_id,
+    'client_number' => app(ClientNumberService::class)->setNextClientNumber(),
+]);
+
+$contact = Contact::create([
+    'external_id' => Uuid::uuid4()->toString(),
+    'name' => $request->name,
+    'email' => $request->email,
+    'primary_number' => $request->primary_number,
+    'secondary_number' => $request->secondary_number,
+    'client_id' => $client->id,
+    'is_primary' => true
+]);
+
+Create project
+ProjectsController.store
+if ($request->client_external_id) {
+    $client = Client::whereExternalId($request->client_external_id);
+}
+
+if(!$client) {
+    Session()->flash('flash_message', __('Could not find client'));
+    return redirect()->back();
+}
+
+$project = Project::create(
+    [
+        'title' => $request->title,
+        'description' => clean($request->description),
+        'user_assigned_id' => $request->user_assigned_id,
+        'deadline' => Carbon::parse($request->deadline),
+        'status_id' => $request->status_id,
+        'user_created_id' => auth()->id(),
+        'external_id' => Uuid::uuid4()->toString(),
+        'client_id' => $client ? $client->id : null,
+    ]
+);
+
+
+Creation lead
+$lead = Lead::create(
+    [
+        'title' => $request->title,
+        'description' => clean($request->description),
+        'user_assigned_id' => $request->user_assigned_id,
+        'deadline' => Carbon::parse($request->deadline . " " . $request->contact_time . ":00"),
+        'status_id' => $request->status_id,
+        'user_created_id' => auth()->id(),
+        'external_id' => Uuid::uuid4()->toString(),
+        'client_id' => $client->id
+    ]
+);
+
+Etape:
+creer lead
+mysql> select * from leads;
++----+--------------------------------------+------------+-------------------+-----------+------------------+-----------+-----------------+-----------+--------+---------------------+------------+---------------------+---------------------+
+| id | external_id                          | title      | description       | status_id | user_assigned_id | client_id | user_created_id | qualified | result 
+| deadline            | deleted_at | created_at          | updated_at          |
++----+--------------------------------------+------------+-------------------+-----------+------------------+-----------+-----------------+-----------+--------+---------------------+------------+---------------------+---------------------+
+| 31 | 02272526-3000-45af-95ee-3d720ad3b660 | mon lead 1 | <p>mon lead 1</p> |         7 |                1 |        75 |               1 |         0 | NULL   
+| 2025-03-28 15:00:00 | NULL       | 2025-03-25 12:57:18 | 2025-03-25 12:57:18 |
++----+--------------------------------------+------------+-------------------+-----------+------------------+-----------+-----------------+-----------+--------+---------------------+------------+---------------------+---------------------+
+
+OffersController.create
+    public function create(Request $request, Lead $lead)
+    {
+        $offer = Offer::create([
+            'status' => OfferStatus::inProgress()->getStatus(),
+            'client_id' => $lead->client_id,
+            'external_id' =>  Uuid::uuid4()->toString(),
+            'source_id' => $lead->id,
+            'source_type' => Lead::class,
+            'status' => OfferStatus::inProgress()->getStatus()
+        ]);
+        
+        foreach ($request->all() as $line) {
+            if(!$line["title"] || !$line["type"] || !$line["price"] || !$line["quantity"]) {
+                return response("missing fields", 422);
+            }
+
+            $invoiceLine = InvoiceLine::make([
+                'title' => $line["title"],
+                'type' => $line["type"],
+                'quantity' => $line["quantity"] ?: 1,
+                'comment' => $line["comment"],
+                'price' => $line["price"] * 100,
+                'product_id' => $line["product"] ? Product::whereExternalId($line["product"])->first()->id : null
+            ]);
+            $offer->invoiceLines()->save($invoiceLine);
+        }
+
+        return response("OK");
+    }
+type offers:
+mysql> select * from offers;
++----+--------------------------------------+---------+-----------------+-----------+-----------+-------------+------------+---------------------+---------------------+
+| id | external_id                          | sent_at | source_type     | source_id | client_id | status      | deleted_at | created_at          | updated_at
+ |
++----+--------------------------------------+---------+-----------------+-----------+-----------+-------------+------------+---------------------+---------------------+
+| 19 | 337151a1-e97a-44a4-8485-efd4adfcca57 | NULL    | App\Models\Lead |        31 |        75 | in-progress | NULL       | 2025-03-25 13:33:09 | 2025-03-25 13:33:09 |
+| 20 | f376d168-4a0d-4fd2-a2a6-02033bd74baa | NULL    | App\Models\Lead |        31 |        75 | in-progress | NULL       | 2025-03-25 13:33:59 | 2025-03-25 13:35:21 |
++----+--------------------------------------+---------+-----------------+-----------+-----------+-------------+------------+---------------------+---------------------+
+mysql> select * from invoice_lines;
++----+-------------+-------+---------+---------+------------+----------+--------+----------+------------+---------------------+---------------------+------------+
+| id | external_id | title | comment | price   | invoice_id | offer_id | type   | quantity | product_id | created_at          | updated_at          | deleted_at |    
++----+-------------+-------+---------+---------+------------+----------+--------+----------+------------+---------------------+---------------------+------------+    
+| 79 |             | p1    |         | 1450000 |       NULL |       19 | pieces |       50 | 6          | 2025-03-25 13:33:09 | 2025-03-25 13:33:09 | NULL       |    
+| 80 |             | p2    |         |  240000 |       NULL |       20 | pieces |       30 | 7          | 2025-03-25 13:33:59 | 2025-03-25 13:33:59 | NULL       |    
++----+-------------+-------+---------+---------+------------+----------+--------+----------+------------+---------------------+---------------------+------------+ 
+
+type invoice:
+inserer en tant que offer normalement
+la difference est que apres, on fait ca
+public function won(Request $request)
+    {
+        $offer = Offer::whereExternalId($request->get('offer_external_id'))->with('invoiceLines')->firstOrFail();
+        $offer->setAsWon();
+        
+        $invoice = Invoice::create($offer->toArray());
+        $invoice->offer_id = $offer->id;
+        $invoice->invoice_number = app(InvoiceNumberService::class)->setNextInvoiceNumber();
+        $invoice->status = InvoiceStatus::draft()->getStatus();
+        $invoice->save();
+        
+        // Copier les lignes de l'offre vers la facture en préservant les prix déjà remisés
+        foreach($offer->invoiceLines as $offerLine) {
+            $invoiceLine = new InvoiceLine();
+            $invoiceLine->fill($offerLine->toArray());
+            $invoiceLine->offer_id = null;
+            $invoiceLine->wasRecentlyCreated = true; // Pour éviter d'appliquer la remise à nouveau
+            $invoice->invoiceLines()->save($invoiceLine);
+        }
+        
+        return redirect()->back();
+    }

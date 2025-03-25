@@ -10,25 +10,23 @@
             <div class="panel panel-default">
                 <div class="panel-heading">{{ __('Import CSV Data') }}</div>
                 <div class="panel-body">
-                    <div class="alert alert-info">
-                        <strong>{{ __('Note:') }}</strong> {{ __('The CSV file must have headers that match the column names in the database table.') }}
-                    </div>
+                    
 
                     <form method="POST" action="{{ route('database.import') }}" enctype="multipart/form-data">
-                        {{ csrf_field() }}
-
+                        {{ csrf_field() }}                                                
                         <div class="form-group">
-                            <label for="table">{{ __('Select Target Table') }}</label>
-                            <select name="table" id="table" class="form-control">
-                                @foreach($tables as $table)
-                                    <option value="{{ $table }}">{{ ucfirst($table) }}</option>
-                                @endforeach
-                            </select>
+                            <label for="csv_file1">{{ __('CSV File 1') }}</label>
+                            <input type="file" name="csv_file1" id="csv_file1" class="form-control" accept=".csv,.txt">
                         </div>
 
                         <div class="form-group">
-                            <label for="csv_file">{{ __('CSV File') }}</label>
-                            <input type="file" name="csv_file" id="csv_file" class="form-control" accept=".csv,.txt">
+                            <label for="csv_file2">{{ __('CSV File 2') }}</label>
+                            <input type="file" name="csv_file2" id="csv_file2" class="form-control" accept=".csv,.txt">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="csv_file3">{{ __('CSV File 3') }}</label>
+                            <input type="file" name="csv_file3" id="csv_file3" class="form-control" accept=".csv,.txt">
                         </div>
 
                         <div class="form-group">
