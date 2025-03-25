@@ -107,7 +107,9 @@ class InvoiceController extends Controller
      */
     private function calculateInvoiceAmount($invoice)
     {
-        return $invoice->invoiceLines->sum('price');
+        return $invoice->invoiceLines->sum(function($line) {
+            return $line->price * $line->quantity;
+        });
     }
 
     /**
@@ -159,23 +161,35 @@ class InvoiceController extends Controller
      */
     public function paymentStats()
     {
-        $invoices = Invoice::with(['payments', 'invoiceLines'])->get();
+        // Récupérer uniquement les factures avec les statuts qui nous intéressent
+        $invoices = Invoice::with(['payments', 'invoiceLines'])
+            ->whereIn('status', [
+                InvoiceStatus::partialPaid()->getStatus(),
+                InvoiceStatus::paid()->getStatus(),
+                InvoiceStatus::overpaid()->getStatus(),
+                InvoiceStatus::unpaid()->getStatus()
+            ])
+            ->get();
         
-        $totalPaid = 0;
-        $totalUnpaid = 0;
+        $totalPaid = 0;      // Montant total payé
+        $totalUnpaid = 0;    // Montant total impayé
         
         foreach ($invoices as $invoice) {
             $invoiceAmount = $this->calculateInvoiceAmount($invoice)/100;
             $paidAmount = $this->calculateTotalPaid($invoice)/100;
+            
             $totalPaid += $paidAmount;
             $totalUnpaid += ($invoiceAmount - $paidAmount);
         }
+
+        $total = $totalPaid + $totalUnpaid;  // Différence entre payé et impayé
 
         return response()->json([
             'status' => 'success',
             'data' => [
                 'total_paid' => $totalPaid,
-                'total_unpaid' => $totalUnpaid
+                'total_unpaid' => $totalUnpaid,
+                'total' => $total
             ]
         ]);
     }
