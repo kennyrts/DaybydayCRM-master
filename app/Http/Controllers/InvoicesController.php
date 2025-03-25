@@ -30,6 +30,7 @@ use App\Models\Offer;
 use App\Models\Product;
 use App\Services\InvoiceNumber\InvoiceNumberService;
 use Illuminate\Support\Facades\Validator;
+use App\Models\Discount;
 
 class InvoicesController extends Controller
 {
@@ -81,12 +82,18 @@ class InvoicesController extends Controller
         $subPrice = $invoiceCalculator->getSubTotal();
         $vatPrice = $invoiceCalculator->getVatTotal();
         $amountDue = $invoiceCalculator->getAmountDue();
+
+        // Calculer le prix réduit
+        $discountRate = Discount::getCurrentRate();
+        $reducedPrice = new Money($totalPrice->getAmount() * (1 - ($discountRate / 100)));
         
         return view('invoices.show')
             ->withInvoice($invoice)
             ->withApiconnected($apiConnected)
             ->withContacts($invoiceContacts)
             ->withfinalPrice(app(MoneyConverter::class, ['money' => $totalPrice])->format())
+            ->withDiscountRate($discountRate)
+            ->withReducedPrice(app(MoneyConverter::class, ['money' => $reducedPrice])->format())
             ->withsubPrice(app(MoneyConverter::class, ['money' => $subPrice])->format())
             ->withVatPrice(app(MoneyConverter::class, ['money' => $vatPrice])->format())
             ->withAmountDueFormatted(app(MoneyConverter::class, ['money' => $amountDue])->format())
@@ -115,6 +122,17 @@ class InvoicesController extends Controller
         if ($invoice->isSent()) {
             session()->flash('flash_message_warning', __('Invoice already sent'));
             return redirect()->route('invoices.show', $external_id);
+        }
+
+        // Vérifier si la remise est cochée
+        if ($request->has('applyDiscount') && $request->applyDiscount) {
+            // Appliquer la remise à toutes les lignes de la facture
+            foreach ($invoice->invoiceLines as $line) {
+                $discountRate = Discount::getCurrentRate();
+                $originalPrice = $line->price;
+                $line->price = $originalPrice * (1 - ($discountRate / 100));
+                $line->save();
+            }
         }
 
         $result = $invoice->invoice($request->invoiceContact);

@@ -82,15 +82,13 @@ class OffersController extends Controller
         $invoice->status = InvoiceStatus::draft()->getStatus();
         $invoice->save();
         
-        // Copier les lignes de l'offre vers la facture en préservant les prix déjà remisés
-        foreach($offer->invoiceLines as $offerLine) {
-            $invoiceLine = new InvoiceLine();
-            $invoiceLine->fill($offerLine->toArray());
+        $lines = $offer->invoiceLines;
+        $newLines = collect();
+        foreach($lines as $invoiceLine) {
             $invoiceLine->offer_id = null;
-            $invoiceLine->wasRecentlyCreated = true; // Pour éviter d'appliquer la remise à nouveau
-            $invoice->invoiceLines()->save($invoiceLine);
+            $newLines->push(InvoiceLine::make($invoiceLine->toArray()));
         }
-        
+        $invoice->invoiceLines()->saveMany($newLines);                
         return redirect()->back();
     }
 

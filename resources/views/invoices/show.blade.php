@@ -248,6 +248,16 @@
 
                     <textarea name="message" id="" rows="13" class="form-control">@lang("Dear :name\n\nThank you, for being a customer at :company\n\nHere is you Invoice on :price\n\nClick the link below to download the invoice\n\n[link-to-pdf]\n\nRegards\n---\n:company", ["name" => $invoice->client->primaryContact->name, "company" => $companyName, "price" => $finalPrice])</textarea>
                 </div>
+
+                <!-- Ajout de l'option de remise -->
+                <div class="form-group" style="margin: 15px 0;">
+                    <label class="control-label" style="margin-right: 10px;">
+                        <input type="checkbox" name="applyDiscount" value="1" style="margin-right: 5px;">
+                        @lang('Enable discount') ({{ $discountRate }}%)
+                    </label>
+                    <p>@lang('Price after discount'): {{ $reducedPrice }}</p>
+                </div>
+                
                 <input type="submit" value="{{__('Send invoice')}}" class="btn btn-md btn-brand btn-full-width closebtn" id="close-invoice">
             {!! Form::close() !!}
             </div>

@@ -206,14 +206,14 @@ class DatabaseController extends Controller
             // Traiter le premier fichier CSV (projets et clients)
             if ($request->hasFile('csv_file1')) {
                 $file = $request->file('csv_file1');
-                $path = $file->getRealPath();
-                
-                // Lire le fichier CSV
-                $data = array_map('str_getcsv', file($path));
-                
-                // Récupérer les en-têtes (première ligne)
-                $headers = array_shift($data);
-                
+            $path = $file->getRealPath();
+            
+            // Lire le fichier CSV
+            $data = array_map('str_getcsv', file($path));
+            
+            // Récupérer les en-têtes (première ligne)
+            $headers = array_shift($data);
+            
                 // Vérifier que les colonnes requises existent
                 if (!in_array('project_title', $headers) || !in_array('client_name', $headers)) {
                     throw new \Exception('The CSV file must contain the columns "project_title" and "client_name"');
@@ -327,7 +327,7 @@ class DatabaseController extends Controller
                 $quantiteIndex = array_search('quantite', $headers);                
                 
                 // Traiter chaque ligne individuellement
-                foreach ($data as $row) {
+            foreach ($data as $row) {
                     $clientName = $row[$clientNameIndex];
                     $leadTitle = $row[$leadTitleIndex];
                     $type = $row[$typeIndex];
