@@ -107,7 +107,9 @@ class InvoiceController extends Controller
      */
     private function calculateInvoiceAmount($invoice)
     {
-        return $invoice->invoiceLines->sum('price');
+        return $invoice->invoiceLines->sum(function($line) {
+            return $line->price * $line->quantity;
+        });
     }
 
     /**
@@ -159,24 +161,107 @@ class InvoiceController extends Controller
      */
     public function paymentStats()
     {
-        $invoices = Invoice::with(['payments', 'invoiceLines'])->get();
+        // Récupérer uniquement les factures avec les statuts qui nous intéressent
+        $invoices = Invoice::with(['payments', 'invoiceLines'])
+            ->whereIn('status', [
+                InvoiceStatus::partialPaid()->getStatus(),
+                InvoiceStatus::paid()->getStatus(),
+                InvoiceStatus::overpaid()->getStatus(),
+                InvoiceStatus::unpaid()->getStatus()
+            ])
+            ->get();
         
-        $totalPaid = 0;
-        $totalUnpaid = 0;
+        $totalPaid = 0;      // Montant total payé
+        $totalUnpaid = 0;    // Montant total impayé
         
         foreach ($invoices as $invoice) {
             $invoiceAmount = $this->calculateInvoiceAmount($invoice)/100;
             $paidAmount = $this->calculateTotalPaid($invoice)/100;
+            
             $totalPaid += $paidAmount;
             $totalUnpaid += ($invoiceAmount - $paidAmount);
         }
+
+        $total = $totalPaid + $totalUnpaid;  // Différence entre payé et impayé
 
         return response()->json([
             'status' => 'success',
             'data' => [
                 'total_paid' => $totalPaid,
-                'total_unpaid' => $totalUnpaid
+                'total_unpaid' => $totalUnpaid,
+                'total' => $total
             ]
         ]);
+    }
+
+    /**
+     * Get invoices by section (total, paid, unpaid)
+     * 
+     * @param string $section
+     * @return JsonResponse
+     */
+    public function getInvoicesBySection($section)
+    {
+        try {
+            // Définir les statuts à inclure selon la section
+            $statuses = [];
+            switch($section) {
+                case 'total':
+                    $statuses = [
+                        InvoiceStatus::paid()->getStatus(),
+                        InvoiceStatus::unpaid()->getStatus(),
+                        InvoiceStatus::partialPaid()->getStatus(),
+                        InvoiceStatus::overpaid()->getStatus()
+                    ];
+                    break;
+                case 'paid':
+                    $statuses = [
+                        InvoiceStatus::paid()->getStatus(),
+                        InvoiceStatus::partialPaid()->getStatus(),
+                        InvoiceStatus::overpaid()->getStatus()
+                    ];
+                    break;
+                case 'unpaid':
+                    $statuses = [
+                        InvoiceStatus::unpaid()->getStatus(),
+                        InvoiceStatus::partialPaid()->getStatus(),
+                        InvoiceStatus::overpaid()->getStatus()
+                    ];
+                    break;
+                default:
+                    throw new \Exception("Invalid section: $section");
+            }
+
+            $invoices = Invoice::whereIn('status', $statuses)
+                ->with(['client', 'payments'])
+                ->get()
+                ->map(function ($invoice) {
+                    return [
+                        'id' => $invoice->id,
+                        'number' => $invoice->invoice_number,
+                        'client_name' => $invoice->client->company_name,
+                        'amount' => $this->calculateInvoiceAmount($invoice)/100,
+                        'due_date' => $invoice->due_at,
+                        'created_at' => $invoice->created_at,
+                        'total_paid' => $this->calculateTotalPaid($invoice)/100,
+                        'remaining' => ($this->calculateInvoiceAmount($invoice)/100) - ($this->calculateTotalPaid($invoice)/100)
+                    ];
+                });
+
+            return response()->json([
+                'status' => 'success',
+                'data' => [
+                    'section' => $section,
+                    'invoices' => $invoices
+                ]
+            ]);
+
+        } catch (\Exception $e) {
+            \Log::error('Erreur: ' . $e->getMessage());
+            return response()->json([
+                'status' => 'error',
+                'message' => $e->getMessage()
+            ], 400);
+        }
     }
 } 

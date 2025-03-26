@@ -36,6 +36,7 @@ Route::middleware('auth.api.token')->group(function () {
     Route::get('/invoices/payment-stats', [InvoiceController::class, 'paymentStats']);
     Route::get('/invoices/status/{status}', [InvoiceController::class, 'getInvoicesByStatus']);
     Route::get('/invoices/{invoiceId}/payments', [InvoiceController::class, 'getInvoicePayments']);
+    Route::get('/invoices/section/{section}', [InvoiceController::class, 'getInvoicesBySection']);
 
     // Routes pour la gestion des paiements
     Route::put('/payments/{paymentId}', [PaymentController::class, 'update']);
