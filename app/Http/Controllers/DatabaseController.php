@@ -327,13 +327,23 @@ class DatabaseController extends Controller
                 $quantiteIndex = array_search('quantite', $headers);                
                 
                 // Traiter chaque ligne individuellement
-            foreach ($data as $row) {
+                foreach ($data as $index => $row) {
                     $clientName = $row[$clientNameIndex];
                     $leadTitle = $row[$leadTitleIndex];
                     $type = $row[$typeIndex];
                     $produit = $row[$produitIndex];
                     $prix = $row[$prixIndex];
                     $quantite = $row[$quantiteIndex];
+                    
+                    // Vérifier que le prix est un nombre positif
+                    if (!is_numeric($prix) || floatval($prix) <= 0) {
+                        throw new \Exception("Ligne " . ($index + 2) . ": Le prix doit être un nombre positif");
+                    }
+                    
+                    // Vérifier que la quantité est un nombre positif
+                    if (!is_numeric($quantite) || floatval($quantite) <= 0) {
+                        throw new \Exception("Ligne " . ($index + 2) . ": La quantité doit être un nombre positif");
+                    }
                     
                     // Récupérer ou créer le lead
                     $lead = $this->getOrCreateLead($leadTitle, $clientName);
