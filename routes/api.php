@@ -19,15 +19,7 @@ use App\Http\Controllers\Api\DiscountController;
 |
 */
 
-// Route simple pour tester l'API
-Route::get('/testa', function() {
-    return response()->json([
-        'message' => 'Ca marche!'
-    ]);
-});
 
-Route::get('/test', function(){ return response()->json(['message' => 'Ca marche2!']);});
-Route::post('/test2', [ApiAuthController::class, 'test2']);
 Route::post('/login', [ApiAuthController::class, 'login']);
 Route::middleware('auth.api.token')->group(function () {
     Route::post('/logout', [ApiAuthController::class, 'logout']);

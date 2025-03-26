@@ -332,17 +332,13 @@ class DatabaseController extends Controller
                     $leadTitle = $row[$leadTitleIndex];
                     $type = $row[$typeIndex];
                     $produit = $row[$produitIndex];
-                    $prix = $row[$prixIndex];
-                    $quantite = $row[$quantiteIndex];
+                    $prix = floatval($row[$prixIndex]);
+                    $quantite = floatval($row[$quantiteIndex]);
                     
-                    // Vérifier que le prix est un nombre positif
-                    if (!is_numeric($prix) || floatval($prix) <= 0) {
-                        throw new \Exception("Ligne " . ($index + 2) . ": Le prix doit être un nombre positif");
-                    }
-                    
-                    // Vérifier que la quantité est un nombre positif
-                    if (!is_numeric($quantite) || floatval($quantite) <= 0) {
-                        throw new \Exception("Ligne " . ($index + 2) . ": La quantité doit être un nombre positif");
+                    // Vérifier si le prix ou la quantité est négatif
+                    if ($prix < 0 || $quantite < 0) {
+                        $lineNumber = $index + 2; // +2 car l'index commence à 0 et on a enlevé la ligne d'en-tête
+                        throw new \Exception("Erreur à la ligne $lineNumber : Les valeurs négatives ne sont pas autorisées (Prix: $prix, Quantité: $quantite)");
                     }
                     
                     // Récupérer ou créer le lead

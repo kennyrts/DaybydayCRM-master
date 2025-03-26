@@ -1,39 +1,146 @@
-# Acceder console mysql
-docker exec -it dbMain mysql -u root -p daybyday
+Clients
+mysql> describe clients;
++---------------+------------------+------+-----+---------+----------------+
+| Field         | Type             | Null | Key | Default | Extra          |
++---------------+------------------+------+-----+---------+----------------+
+| id            | int(10) unsigned | NO   | PRI | NULL    | auto_increment |
+| external_id   | varchar(255)     | NO   |     | NULL    |                |
+| address       | varchar(255)     | YES  |     | NULL    |                |
+| zipcode       | varchar(255)     | YES  |     | NULL    |                |
+| city          | varchar(255)     | YES  |     | NULL    |                |
+| company_name  | varchar(255)     | NO   |     | NULL    |                |
+| vat           | varchar(255)     | YES  |     | NULL    |                |
+| company_type  | varchar(255)     | YES  |     | NULL    |                |
+| client_number | bigint(20)       | YES  |     | NULL    |                |
+| user_id       | int(10) unsigned | NO   | MUL | NULL    |                |
+| industry_id   | int(10) unsigned | NO   | MUL | NULL    |                |
+| deleted_at    | timestamp        | YES  |     | NULL    |                |
+| created_at    | timestamp        | YES  |     | NULL    |                |
+| updated_at    | timestamp        | YES  |     | NULL    |                |
++---------------+------------------+------+-----+---------+----------------+
 
-# Exporter la structure de la base de données (sans les données)
-docker exec dbMain mysqldump -u root -proot --no-data --skip-comments daybyday > schema.sql
-docker exec dbMain mysqldump -u root -proot daybyday > backup.sql
-docker exec dbMain mysql -u root -proot daybyday < backup.sql
+mysql> describe contacts;
++------------------+------------------+------+-----+---------+----------------+
+| Field            | Type             | Null | Key | Default | Extra          |
++------------------+------------------+------+-----+---------+----------------+
+| id               | int(10) unsigned | NO   | PRI | NULL    | auto_increment |
+| external_id      | varchar(255)     | NO   |     | NULL    |                |
+| name             | varchar(255)     | NO   |     | NULL    |                |
+| email            | varchar(255)     | NO   |     | NULL    |                |
+| primary_number   | varchar(255)     | YES  |     | NULL    |                |
+| secondary_number | varchar(255)     | YES  |     | NULL    |                |
+| client_id        | int(10) unsigned | NO   | MUL | NULL    |                |
+| is_primary       | tinyint(1)       | NO   |     | NULL    |                |
+| deleted_at       | timestamp        | YES  |     | NULL    |                |
+| created_at       | timestamp        | YES  |     | NULL    |                |
+| updated_at       | timestamp        | YES  |     | NULL    |                |
++------------------+------------------+------+-----+---------+----------------+
 
-# Donnees
-docker exec -it phpMain php artisan migrate:fresh --seed && docker exec -it phpMain php artisan db:seed --class=DummyDatabaseSeeder
-
-# Installation
-docker-compose exec --user root php apt-get update
-docker-compose exec --user root php apt-get install -y nodejs npm
-
-# Vider cache
-docker-compose exec php php artisan cache:clear
-docker-compose exec php php artisan config:clear
-docker-compose exec php php artisan view:clear
-docker-compose exec php php artisan route:clear
-
-# Générer le diagramme ER
-docker exec phpMain composer require --dev beyondcode/laravel-er-diagram-generator
-
-#Kenny
-mysql> select * from users where email = 'ratsimbazafykenny@gmail.com';
-+----+--------------------------------------+-------+-----------------------------+--------------------------------------------------------------+----------+----------------+------------------+------------+----------------+----------+------------+---------------------+---------------------+
-| id | external_id                          | name  | email                       | password                                                     | address  | primary_number | secondary_number | image_path | remember_token | language | deleted_at | created_at          | updated_at          |
-+----+--------------------------------------+-------+-----------------------------+--------------------------------------------------------------+----------+----------------+------------------+------------+----------------+----------+------------+---------------------+---------------------+
-|  7 | 63974b80-044e-3f57-867a-09f822d7a15c | Kenny | ratsimbazafykenny@gmail.com | $2y$10$unqJR9TR3cWGat3lw6vR6OWDfIMUWAgHv4eu1Q.EYoQGXloTR9DZW | Apt. 742 | 60460848       | 16575316         | NULL       | NULL        
-   | en       | NULL       | 2025-03-22 06:11:16 | 2025-03-22 06:43:48 |
-+----+--------------------------------------+-------+-----------------------------+--------------------------------------------------------------+----------+----------------+------------------+------------+----------------+----------+------------+---------------------+---------------------+
-
-mysql> select * from clients where user_id = '7';
-+----+--------------------------------------+-----------+------------+-------------------+------------------+----------+--------------+---------------+---------+-------------+------------+---------------------+---------------------+
-| id | external_id                          | address   | zipcode    | city              | company_name     | vat      | company_type | client_number | user_id | industry_id | deleted_at | created_at          | updated_at          |
-+----+--------------------------------------+-----------+------------+-------------------+------------------+----------+--------------+---------------+---------+-------------+------------+---------------------+---------------------+
-|  1 | 6e30e491-220b-3e1c-9273-448c65101911 | Suite 399 | 49906-0825 | Port Betsyborough | Anderson-Bartell | 56420218 | ApS          |          NULL |       7 |           4 | NULL       | 2025-03-22 06:11:20 | 2025-03-22 06:11:20 |
-+----+--------------------------------------+-----------+------------+-------------------+------------------+----------+--------------+---------------+---------+-------------+------------+---------------------+---------------------+
+mysql> describe projects;
++------------------+------------------+------+-----+---------+----------------+
+| Field            | Type             | Null | Key | Default | Extra          |
++------------------+------------------+------+-----+---------+----------------+
+| id               | int(10) unsigned | NO   | PRI | NULL    | auto_increment |
+| external_id      | varchar(255)     | NO   |     | NULL    |                |
+| title            | varchar(255)     | NO   |     | NULL    |                |
+| description      | text             | NO   |     | NULL    |                |
+| status_id        | int(10) unsigned | NO   | MUL | NULL    |                |
+| user_assigned_id | int(10) unsigned | NO   | MUL | NULL    |                |
+| user_created_id  | int(10) unsigned | NO   | MUL | NULL    |                |
+| client_id        | int(10) unsigned | NO   | MUL | NULL    |                |
+| invoice_id       | int(10) unsigned | YES  | MUL | NULL    |                |
+| deadline         | date             | NO   |     | NULL    |                |
+| deleted_at       | timestamp        | YES  |     | NULL    |                |
+| created_at       | timestamp        | YES  |     | NULL    |                |
+| updated_at       | timestamp        | YES  |     | NULL    |                |
++------------------+------------------+------+-----+---------+----------------+
+mysql> describe tasks;
++------------------+------------------+------+-----+---------+----------------+
+| Field            | Type             | Null | Key | Default | Extra          |
++------------------+------------------+------+-----+---------+----------------+
+| id               | int(10) unsigned | NO   | PRI | NULL    | auto_increment |
+| external_id      | varchar(255)     | NO   |     | NULL    |                |
+| title            | varchar(255)     | NO   |     | NULL    |                |
+| description      | text             | NO   |     | NULL    |                |
+| status_id        | int(10) unsigned | NO   | MUL | NULL    |                |
+| user_assigned_id | int(10) unsigned | NO   | MUL | NULL    |                |
+| user_created_id  | int(10) unsigned | NO   | MUL | NULL    |                |
+| client_id        | int(10) unsigned | NO   | MUL | NULL    |                |
+| project_id       | int(10) unsigned | YES  | MUL | NULL    |                |
+| deadline         | date             | NO   |     | NULL    |                |
+| deleted_at       | timestamp        | YES  |     | NULL    |                |
+| created_at       | timestamp        | YES  |     | NULL    |                |
+| updated_at       | timestamp        | YES  |     | NULL    |                |
++------------------+------------------+------+-----+---------+----------------+
+mysql> describe invoices;
++------------------------+---------------------+------+-----+---------+----------------+
+| Field                  | Type                | Null | Key | Default | Extra          |
++------------------------+---------------------+------+-----+---------+----------------+
+| id                     | int(10) unsigned    | NO   | PRI | NULL    | auto_increment |
+| external_id            | varchar(255)        | NO   |     | NULL    |                |
+| status                 | varchar(255)        | NO   |     | NULL    |                |
+| invoice_number         | bigint(20)          | YES  |     | NULL    |                |
+| sent_at                | datetime            | YES  |     | NULL    |                |
+| due_at                 | datetime            | YES  |     | NULL    |                |
+| integration_invoice_id | varchar(255)        | YES  |     | NULL    |                |
+| integration_type       | varchar(255)        | YES  |     | NULL    |                |
+| source_type            | varchar(255)        | YES  | MUL | NULL    |                |
+| source_id              | bigint(20) unsigned | YES  |     | NULL    |                |
+| client_id              | int(10) unsigned    | NO   | MUL | NULL    |                |
+| offer_id               | int(10) unsigned    | YES  | MUL | NULL    |                |
+| deleted_at             | timestamp           | YES  |     | NULL    |                |
+| created_at             | timestamp           | YES  |     | NULL    |                |
+| updated_at             | timestamp           | YES  |     | NULL    |                |
++------------------------+---------------------+------+-----+---------+----------------+
+mysql> describe invoice_lines;
++-------------+------------------+------+-----+---------+----------------+
+| Field       | Type             | Null | Key | Default | Extra          |
++-------------+------------------+------+-----+---------+----------------+
+| id          | int(10) unsigned | NO   | PRI | NULL    | auto_increment |
+| external_id | varchar(255)     | NO   |     | NULL    |                |
+| title       | varchar(255)     | NO   |     | NULL    |                |
+| comment     | text             | NO   |     | NULL    |                |
+| price       | int(11)          | NO   |     | NULL    |                |
+| invoice_id  | int(10) unsigned | YES  | MUL | NULL    |                |
+| offer_id    | int(10) unsigned | YES  | MUL | NULL    |                |
+| type        | varchar(255)     | YES  |     | NULL    |                |
+| quantity    | int(11)          | YES  |     | NULL    |                |
+| product_id  | varchar(255)     | YES  |     | NULL    |                |
+| created_at  | timestamp        | YES  |     | NULL    |                |
+| updated_at  | timestamp        | YES  |     | NULL    |                |
+| deleted_at  | timestamp        | YES  |     | NULL    |                |
++-------------+------------------+------+-----+---------+----------------+
+mysql> describe leads;
++------------------+------------------+------+-----+---------+----------------+
+| Field            | Type             | Null | Key | Default | Extra          |
++------------------+------------------+------+-----+---------+----------------+
+| id               | int(10) unsigned | NO   | PRI | NULL    | auto_increment |
+| external_id      | varchar(255)     | NO   |     | NULL    |                |
+| title            | varchar(255)     | NO   |     | NULL    |                |
+| description      | text             | NO   |     | NULL    |                |
+| status_id        | int(10) unsigned | NO   | MUL | NULL    |                |
+| user_assigned_id | int(10) unsigned | NO   | MUL | NULL    |                |
+| client_id        | int(10) unsigned | NO   | MUL | NULL    |                |
+| user_created_id  | int(10) unsigned | NO   | MUL | NULL    |                |
+| qualified        | tinyint(1)       | NO   | MUL | 0       |                |
+| result           | varchar(255)     | YES  |     | NULL    |                |
+| deadline         | datetime         | NO   |     | NULL    |                |
+| deleted_at       | timestamp        | YES  |     | NULL    |                |
+| created_at       | timestamp        | YES  |     | NULL    |                |
+| updated_at       | timestamp        | YES  |     | NULL    |                |
++------------------+------------------+------+-----+---------+----------------+
+mysql> describe offers;
++-------------+---------------------+------+-----+---------+----------------+
+| Field       | Type                | Null | Key | Default | Extra          |
++-------------+---------------------+------+-----+---------+----------------+
+| id          | int(10) unsigned    | NO   | PRI | NULL    | auto_increment |
+| external_id | varchar(255)        | NO   |     | NULL    |                |
+| sent_at     | datetime            | YES  |     | NULL    |                |
+| source_type | varchar(255)        | YES  | MUL | NULL    |                |
+| source_id   | bigint(20) unsigned | YES  |     | NULL    |                |
+| client_id   | int(10) unsigned    | NO   | MUL | NULL    |                |
+| status      | varchar(255)        | NO   |     | NULL    |                |
+| deleted_at  | timestamp           | YES  |     | NULL    |                |
+| created_at  | timestamp           | YES  |     | NULL    |                |
+| updated_at  | timestamp           | YES  |     | NULL    |                |
++-------------+---------------------+------+-----+---------+----------------+

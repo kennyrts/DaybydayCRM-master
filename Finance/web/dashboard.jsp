@@ -64,10 +64,7 @@
                             <div class="col-6 col-lg-4 col-md-6">
                                 <div class="card">
                                     <div class="card-body">
-                                        <div class="d-flex align-items-center">
-                                            <div class="avatar avatar-xl bg-success">
-                                                <i class="bi bi-credit-card fs-3"></i>
-                                            </div>
+                                        <div class="d-flex align-items-center">                                            
                                             <div class="ms-3 name">
                                                 <h5 class="font-bold">Total Paid</h5>
                                                 <h6 class="text-muted mb-0">${paymentStats.total_paid} $</h6>
@@ -82,10 +79,7 @@
                             <div class="col-6 col-lg-4 col-md-6">
                                 <div class="card">
                                     <div class="card-body">
-                                        <div class="d-flex align-items-center">
-                                            <div class="avatar avatar-xl bg-danger">
-                                                <i class="bi bi-exclamation-triangle fs-3"></i>
-                                            </div>
+                                        <div class="d-flex align-items-center">                                            
                                             <div class="ms-3 name">
                                                 <h5 class="font-bold">Total Unpaid</h5>
                                                 <h6 class="text-muted mb-0">${paymentStats.total_unpaid} $</h6>
@@ -100,10 +94,7 @@
                             <div class="col-6 col-lg-4 col-md-6">
                                 <div class="card">
                                     <div class="card-body">
-                                        <div class="d-flex align-items-center">
-                                            <div class="avatar avatar-xl bg-primary">
-                                                <i class="bi bi-cash-stack fs-3"></i>
-                                            </div>
+                                        <div class="d-flex align-items-center">                                            
                                             <div class="ms-3 name">
                                                 <h5 class="font-bold">Total</h5>
                                                 <h6 class="text-muted mb-0">${paymentStats.total} $</h6>
