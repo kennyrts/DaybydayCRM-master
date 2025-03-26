@@ -19,6 +19,7 @@ class InvoiceController extends Controller
      */
     public function countByStatus()
     {
+        // Récupérer les comptages par statut
         $counts = Invoice::select('status', DB::raw('count(*) as total'))
             ->groupBy('status')
             ->get()
@@ -26,10 +27,7 @@ class InvoiceController extends Controller
                 try {
                     $status = InvoiceStatus::fromStatus($item->status);
                     return [
-                        $status->getDisplayValue() => [
-                            'count' => $item->total,
-                            'status' => $status->getStatus()
-                        ]
+                        $status->getDisplayValue() => $item->total
                     ];
                 } catch (\Exception $e) {
                     return [];
@@ -39,19 +37,16 @@ class InvoiceController extends Controller
         // Ajouter les statuts qui n'ont pas de factures (count = 0)
         foreach (InvoiceStatus::values() as $status) {
             if (!$counts->has($status->getDisplayValue())) {
-                $counts[$status->getDisplayValue()] = [
-                    'count' => 0,
-                    'status' => $status->getStatus()
-                ];
+                $counts[$status->getDisplayValue()] = 0;
             }
         }
 
+        // Ajouter le total
+        // $counts['total'] = Invoice::count();
+
         return response()->json([
             'status' => 'success',
-            'data' => [
-                'total' => Invoice::count(),
-                'by_status' => $counts
-            ]
+            'data' => $counts
         ]);
     }
 
