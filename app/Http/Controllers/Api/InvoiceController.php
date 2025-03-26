@@ -193,4 +193,75 @@ class InvoiceController extends Controller
             ]
         ]);
     }
+
+    /**
+     * Get invoices by section (total, paid, unpaid)
+     * 
+     * @param string $section
+     * @return JsonResponse
+     */
+    public function getInvoicesBySection($section)
+    {
+        try {
+            // Définir les statuts à inclure selon la section
+            $statuses = [];
+            switch($section) {
+                case 'total':
+                    $statuses = [
+                        InvoiceStatus::paid()->getStatus(),
+                        InvoiceStatus::unpaid()->getStatus(),
+                        InvoiceStatus::partialPaid()->getStatus(),
+                        InvoiceStatus::overpaid()->getStatus()
+                    ];
+                    break;
+                case 'paid':
+                    $statuses = [
+                        InvoiceStatus::paid()->getStatus(),
+                        InvoiceStatus::partialPaid()->getStatus(),
+                        InvoiceStatus::overpaid()->getStatus()
+                    ];
+                    break;
+                case 'unpaid':
+                    $statuses = [
+                        InvoiceStatus::unpaid()->getStatus(),
+                        InvoiceStatus::partialPaid()->getStatus(),
+                        InvoiceStatus::overpaid()->getStatus()
+                    ];
+                    break;
+                default:
+                    throw new \Exception("Invalid section: $section");
+            }
+
+            $invoices = Invoice::whereIn('status', $statuses)
+                ->with(['client', 'payments'])
+                ->get()
+                ->map(function ($invoice) {
+                    return [
+                        'id' => $invoice->id,
+                        'number' => $invoice->invoice_number,
+                        'client_name' => $invoice->client->company_name,
+                        'amount' => $this->calculateInvoiceAmount($invoice)/100,
+                        'due_date' => $invoice->due_at,
+                        'created_at' => $invoice->created_at,
+                        'total_paid' => $this->calculateTotalPaid($invoice)/100,
+                        'remaining' => ($this->calculateInvoiceAmount($invoice)/100) - ($this->calculateTotalPaid($invoice)/100)
+                    ];
+                });
+
+            return response()->json([
+                'status' => 'success',
+                'data' => [
+                    'section' => $section,
+                    'invoices' => $invoices
+                ]
+            ]);
+
+        } catch (\Exception $e) {
+            \Log::error('Erreur: ' . $e->getMessage());
+            return response()->json([
+                'status' => 'error',
+                'message' => $e->getMessage()
+            ], 400);
+        }
+    }
 } 
